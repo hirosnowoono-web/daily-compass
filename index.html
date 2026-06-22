@@ -16,6 +16,8 @@
   --muted: #7c827c;
   --line: #d9d5ca;
   --coral: #e56f55;
+  --red: #d95645;
+  --blue: #4d7fd3;
   --sage: #9bad91;
   --deep-sage: #617660;
   --shadow: 0 18px 50px rgba(50, 55, 46, 0.08);
@@ -90,14 +92,20 @@ h1 em { color: var(--coral); font-weight: 400; }
 .legend span { display: flex; align-items: center; gap: 6px; }
 .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
 .coral { background: var(--coral); } .ink { background: var(--ink); }
+.red { background: var(--red); } .blue { background: var(--blue); }
 .chart-wrap { position: relative; min-height: 280px; }
 #trendChart { width: 100%; min-height: 260px; overflow: visible; }
 .grid-line { stroke: #dfdbd1; stroke-width: 1; stroke-dasharray: 3 6; }
 .chart-label { fill: #969991; font-size: 9px; font-family: sans-serif; }
 .axis-label { fill: var(--ink); font-size: 10.5px; font-weight: 700; }
-.chart-value { fill: var(--coral); font-size: 10px; font-weight: 700; }
+.axis-label-right { fill: var(--deep-sage); }
+.chart-value { font-size: 10px; font-weight: 700; }
+.chart-value-high { fill: var(--red); }
+.chart-value-low { fill: var(--blue); }
 .screen-line { fill: none; stroke: var(--coral); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.screen-bar { fill: var(--coral); opacity: .82; }
+.screen-bar { opacity: .86; }
+.screen-bar-high { fill: var(--red); }
+.screen-bar-low { fill: var(--blue); }
 .workout-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 5 5; }
 .point-screen { fill: var(--coral); stroke: var(--card); stroke-width: 3; }
 .point-workout { fill: var(--ink); stroke: var(--card); stroke-width: 3; }
@@ -266,7 +274,7 @@ h1 em { color: var(--coral); font-weight: 400; }
             <p class="section-number">03 / TRENDS</p>
             <h2>スクリーンタイムの推移</h2>
           </div>
-          <div class="legend"><span><i class="dot coral"></i>スクリーンタイム</span><span><i class="dot ink"></i>筋トレ</span></div>
+          <div class="legend"><span><i class="dot blue"></i>90分未満</span><span><i class="dot red"></i>90分以上</span><span><i class="dot ink"></i>筋トレ</span></div>
         </div>
         <div class="chart-wrap">
           <svg id="trendChart" viewBox="0 0 900 280" role="img" aria-label="14日間のスクリーンタイムと筋トレ回数のグラフ"></svg>
@@ -428,7 +436,7 @@ function renderChart() {
   const available = keys.filter((key) => records[key]);
   document.querySelector("#emptyChart").style.display = available.length ? "none" : "flex";
   svg.style.opacity = available.length ? "1" : ".25";
-  const width = 900, height = 280, left = 42, right = 22, top = 18, bottom = 35;
+  const width = 900, height = 280, left = 42, right = 48, top = 18, bottom = 35;
   const innerW = width - left - right, innerH = height - top - bottom;
   const screenMax = Math.max(120, ...available.map((key) => records[key].screenTime));
   const workoutValues = available.map((key) => records[key].workoutCount).filter((value) => value != null);
@@ -442,6 +450,11 @@ function renderChart() {
     const value = Math.round(screenMax * (1 - i / 4));
     markup += `<line class="grid-line" x1="${left}" x2="${width-right}" y1="${y}" y2="${y}"/><text class="chart-label axis-label" text-anchor="end" x="35" y="${y+3}">${value}分</text>`;
   }
+  for (let i = 0; i <= 4; i++) {
+    const y = top + (i / 4) * innerH;
+    const value = Math.round(workoutMax * (1 - i / 4));
+    markup += `<text class="chart-label axis-label axis-label-right" text-anchor="start" x="${width - right + 8}" y="${y+3}">${value}回</text>`;
+  }
   keys.forEach((key, index) => {
     if (index % 2 === 0 || index === 13) markup += `<text class="chart-label" text-anchor="middle" x="${x(index)}" y="${height-8}">${formatShortDate(key)}</text>`;
   });
@@ -449,7 +462,8 @@ function renderChart() {
     let result = "", points = [];
     keys.forEach((key, index) => {
       const value = records[key]?.[valueKey];
-      if (value != null) points.push([x(index), yFn(value)]);
+      const shouldPlot = value != null && !(valueKey === "workoutCount" && value === 0);
+      if (shouldPlot) points.push([x(index), yFn(value)]);
       else if (points.length) { result += draw(points, className, pointClass); points = []; }
     });
     if (points.length) result += draw(points, className, pointClass);
@@ -460,8 +474,9 @@ function renderChart() {
     if (!records[key]) return;
     const y = yScreen(records[key].screenTime);
     const barWidth = 32;
-    markup += `<rect class="screen-bar" x="${x(index) - barWidth / 2}" y="${y}" width="${barWidth}" height="${top + innerH - y}" rx="5"/>`;
-    markup += `<text class="chart-label chart-value" text-anchor="middle" x="${x(index)}" y="${Math.max(11, y - 11)}">${records[key].screenTime}分</text>`;
+    const level = records[key].screenTime >= 90 ? "high" : "low";
+    markup += `<rect class="screen-bar screen-bar-${level}" x="${x(index) - barWidth / 2}" y="${y}" width="${barWidth}" height="${top + innerH - y}" rx="5"/>`;
+    markup += `<text class="chart-label chart-value chart-value-${level}" text-anchor="middle" x="${x(index)}" y="${Math.max(11, y - 11)}">${records[key].screenTime}分</text>`;
   });
   markup += segments("workoutCount", yWorkout, "workout-line", "point-workout");
   svg.innerHTML = markup;

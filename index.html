@@ -94,6 +94,7 @@ h1 em { color: var(--coral); font-weight: 400; }
 #trendChart { width: 100%; min-height: 260px; overflow: visible; }
 .grid-line { stroke: #dfdbd1; stroke-width: 1; stroke-dasharray: 3 6; }
 .chart-label { fill: #969991; font-size: 9px; font-family: sans-serif; }
+.axis-label { fill: var(--ink); font-size: 10.5px; font-weight: 700; }
 .chart-value { fill: var(--coral); font-size: 10px; font-weight: 700; }
 .screen-line { fill: none; stroke: var(--coral); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .screen-bar { fill: var(--coral); opacity: .82; }
@@ -153,8 +154,8 @@ h1 em { color: var(--coral); font-weight: 400; }
   .score-card { border-radius: 12px; }
   .chart-heading { display: block; }
   .legend { margin: -15px 0 18px; }
-  .chart-wrap { min-height: 220px; overflow-x: auto; overflow-y: hidden; }
-  #trendChart { min-width: 660px; min-height: 220px; }
+  .chart-wrap { min-height: 220px; overflow: visible; }
+  #trendChart { min-width: 100%; width: 100%; min-height: 220px; }
   .history-section { padding-top: 42px; }
   .history-row { grid-template-columns: 80px 1fr 1fr; gap: 10px; padding: 12px 0; }
   .status-pair { grid-column: 2 / 4; }
@@ -439,7 +440,7 @@ function renderChart() {
   for (let i = 0; i <= 4; i++) {
     const y = top + (i / 4) * innerH;
     const value = Math.round(screenMax * (1 - i / 4));
-    markup += `<line class="grid-line" x1="${left}" x2="${width-right}" y1="${y}" y2="${y}"/><text class="chart-label" x="0" y="${y+3}">${value}分</text>`;
+    markup += `<line class="grid-line" x1="${left}" x2="${width-right}" y1="${y}" y2="${y}"/><text class="chart-label axis-label" text-anchor="end" x="35" y="${y+3}">${value}分</text>`;
   }
   keys.forEach((key, index) => {
     if (index % 2 === 0 || index === 13) markup += `<text class="chart-label" text-anchor="middle" x="${x(index)}" y="${height-8}">${formatShortDate(key)}</text>`;

@@ -96,6 +96,7 @@ h1 em { color: var(--coral); font-weight: 400; }
 .chart-label { fill: #969991; font-size: 9px; font-family: sans-serif; }
 .chart-value { fill: var(--coral); font-size: 10px; font-weight: 700; }
 .screen-line { fill: none; stroke: var(--coral); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.screen-bar { fill: var(--coral); opacity: .82; }
 .workout-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 5 5; }
 .point-screen { fill: var(--coral); stroke: var(--card); stroke-width: 3; }
 .point-workout { fill: var(--ink); stroke: var(--card); stroke-width: 3; }
@@ -214,7 +215,7 @@ h1 em { color: var(--coral); font-weight: 400; }
           <label class="field-row" for="workoutCount">
             <span class="field-icon">↗</span>
             <span class="field-copy"><strong>筋トレ</strong><small>今日こなした回数</small></span>
-            <span class="number-input"><input id="workoutCount" name="workoutCount" type="number" min="0" max="9999" inputmode="numeric" placeholder="0" required /><b>回</b></span>
+            <span class="number-input"><input id="workoutCount" name="workoutCount" type="number" min="0" max="9999" inputmode="numeric" placeholder="空欄でも可" /><b>回</b></span>
           </label>
 
           <div class="question-row">
@@ -264,10 +265,10 @@ h1 em { color: var(--coral); font-weight: 400; }
             <p class="section-number">03 / TRENDS</p>
             <h2>スクリーンタイムの推移</h2>
           </div>
-          <div class="legend"><span><i class="dot coral"></i>1日の利用時間</span></div>
+          <div class="legend"><span><i class="dot coral"></i>スクリーンタイム</span><span><i class="dot ink"></i>筋トレ</span></div>
         </div>
         <div class="chart-wrap">
-          <svg id="trendChart" viewBox="0 0 900 280" role="img" aria-label="14日間のスクリーンタイムのグラフ"></svg>
+          <svg id="trendChart" viewBox="0 0 900 280" role="img" aria-label="14日間のスクリーンタイムと筋トレ回数のグラフ"></svg>
           <div class="empty-chart" id="emptyChart"><strong>最初の記録をつけよう</strong><span>2日以上記録すると、変化が線で見えてきます。</span></div>
         </div>
       </section>
@@ -346,7 +347,7 @@ form.addEventListener("submit", (event) => {
   const data = new FormData(form);
   records[dateInput.value] = {
     screenTime: Number(data.get("screenTime")),
-    workoutCount: Number(data.get("workoutCount")),
+    workoutCount: data.get("workoutCount") === "" ? null : Number(data.get("workoutCount")),
     stoppedVideo: data.get("stoppedVideo") === "true",
     avoidedMoneyForward: data.get("avoidedMoneyForward") === "true",
     updatedAt: new Date().toISOString()
@@ -408,7 +409,7 @@ function renderHistory() {
     return `<article class="history-row" data-date="${key}" tabindex="0">
       <div class="history-date">${formatShortDate(key)}<small>${weekday}</small></div>
       <div>${item.screenTime}分<small>スクリーン</small></div>
-      <div>${item.workoutCount}回<small>筋トレ</small></div>
+      <div>${item.workoutCount == null ? "—" : `${item.workoutCount}回`}<small>筋トレ</small></div>
       <div class="status-pair"><span class="status-chip ${item.stoppedVideo ? "yes" : ""}">動画 ${item.stoppedVideo ? "○" : "—"}</span><span class="status-chip ${item.avoidedMoneyForward ? "yes" : ""}">証券 ${item.avoidedMoneyForward ? "○" : "—"}</span></div>
       <span class="edit-arrow">→</span>
     </article>`;
@@ -429,8 +430,11 @@ function renderChart() {
   const width = 900, height = 280, left = 42, right = 22, top = 18, bottom = 35;
   const innerW = width - left - right, innerH = height - top - bottom;
   const screenMax = Math.max(120, ...available.map((key) => records[key].screenTime));
+  const workoutValues = available.map((key) => records[key].workoutCount).filter((value) => value != null);
+  const workoutMax = Math.max(10, ...workoutValues);
   const x = (index) => left + (index / 13) * innerW;
   const yScreen = (value) => top + innerH - (value / screenMax) * innerH;
+  const yWorkout = (value) => top + innerH - (value / workoutMax) * innerH;
   let markup = "";
   for (let i = 0; i <= 4; i++) {
     const y = top + (i / 4) * innerH;
@@ -443,19 +447,22 @@ function renderChart() {
   const segments = (valueKey, yFn, className, pointClass) => {
     let result = "", points = [];
     keys.forEach((key, index) => {
-      if (records[key]) points.push([x(index), yFn(records[key][valueKey])]);
+      const value = records[key]?.[valueKey];
+      if (value != null) points.push([x(index), yFn(value)]);
       else if (points.length) { result += draw(points, className, pointClass); points = []; }
     });
     if (points.length) result += draw(points, className, pointClass);
     return result;
   };
   const draw = (points, className, pointClass) => `<polyline class="${className}" points="${points.map(p => p.join(",")).join(" ")}"/>${points.map(p => `<circle class="${pointClass}" cx="${p[0]}" cy="${p[1]}" r="5"/>`).join("")}`;
-  markup += segments("screenTime", yScreen, "screen-line", "point-screen");
   keys.forEach((key, index) => {
     if (!records[key]) return;
     const y = yScreen(records[key].screenTime);
+    const barWidth = 32;
+    markup += `<rect class="screen-bar" x="${x(index) - barWidth / 2}" y="${y}" width="${barWidth}" height="${top + innerH - y}" rx="5"/>`;
     markup += `<text class="chart-label chart-value" text-anchor="middle" x="${x(index)}" y="${Math.max(11, y - 11)}">${records[key].screenTime}分</text>`;
   });
+  markup += segments("workoutCount", yWorkout, "workout-line", "point-workout");
   svg.innerHTML = markup;
 }
 

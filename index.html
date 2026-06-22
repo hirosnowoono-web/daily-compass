@@ -94,12 +94,16 @@ h1 em { color: var(--coral); font-weight: 400; }
 .coral { background: var(--coral); } .ink { background: var(--ink); }
 .red { background: var(--red); } .blue { background: var(--blue); }
 .chart-wrap { position: relative; min-height: 280px; }
-#trendChart { width: 100%; min-height: 260px; overflow: visible; }
+.chart-scroll { overflow-x: auto; overflow-y: hidden; scrollbar-color: var(--sage) transparent; padding-bottom: 8px; }
+#trendChart { display: block; width: 100%; min-width: 900px; min-height: 260px; overflow: visible; }
+.chart-axis { position: absolute; z-index: 3; top: 17px; bottom: 43px; width: 48px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; color: var(--ink); font-size: 18px; font-weight: 800; line-height: 1; }
+.chart-axis-left { left: 0; align-items: flex-end; padding-right: 7px; background: linear-gradient(90deg, var(--card) 75%, transparent); }
+.chart-axis-right { right: 0; align-items: flex-start; padding-left: 7px; color: var(--deep-sage); background: linear-gradient(270deg, var(--card) 75%, transparent); }
 .grid-line { stroke: #dfdbd1; stroke-width: 1; stroke-dasharray: 3 6; }
-.chart-label { fill: #969991; font-size: 9px; font-family: sans-serif; }
+.chart-label { fill: #696e69; font-size: 18px; font-family: sans-serif; font-weight: 600; }
 .axis-label { fill: var(--ink); font-size: 10.5px; font-weight: 700; }
 .axis-label-right { fill: var(--deep-sage); }
-.chart-value { font-size: 10px; font-weight: 700; }
+.chart-value { font-size: 18px; font-weight: 800; }
 .chart-value-high { fill: var(--red); }
 .chart-value-low { fill: var(--blue); }
 .screen-line { fill: none; stroke: var(--coral); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
@@ -162,8 +166,10 @@ h1 em { color: var(--coral); font-weight: 400; }
   .score-card { border-radius: 12px; }
   .chart-heading { display: block; }
   .legend { margin: -15px 0 18px; }
-  .chart-wrap { min-height: 220px; overflow: visible; }
-  #trendChart { min-width: 100%; width: 100%; min-height: 220px; }
+  .chart-wrap { min-height: 300px; }
+  .chart-scroll { margin: 0 37px; }
+  #trendChart { min-width: 1000px; width: 1000px; min-height: 280px; }
+  .chart-axis { top: 18px; bottom: 48px; width: 42px; font-size: 17px; }
   .history-section { padding-top: 42px; }
   .history-row { grid-template-columns: 80px 1fr 1fr; gap: 10px; padding: 12px 0; }
   .status-pair { grid-column: 2 / 4; }
@@ -266,7 +272,11 @@ h1 em { color: var(--coral); font-weight: 400; }
           <div class="legend"><span><i class="dot blue"></i>90分未満</span><span><i class="dot red"></i>90分以上</span><span><i class="dot ink"></i>筋トレ</span></div>
         </div>
         <div class="chart-wrap">
-          <svg id="trendChart" viewBox="0 0 900 280" role="img" aria-label="14日間のスクリーンタイムと筋トレ回数のグラフ"></svg>
+          <div class="chart-axis chart-axis-left" id="screenAxis" aria-label="スクリーンタイムの縦軸"></div>
+          <div class="chart-scroll">
+            <svg id="trendChart" viewBox="0 0 900 280" role="img" aria-label="14日間のスクリーンタイムと筋トレ回数のグラフ"></svg>
+          </div>
+          <div class="chart-axis chart-axis-right" id="workoutAxis" aria-label="筋トレ回数の縦軸"></div>
           <div class="empty-chart" id="emptyChart"><strong>最初の記録をつけよう</strong><span>2日以上記録すると、変化が線で見えてきます。</span></div>
         </div>
       </section>
@@ -433,16 +443,12 @@ function renderChart() {
   const x = (index) => left + (index / 13) * innerW;
   const yScreen = (value) => top + innerH - (value / screenMax) * innerH;
   const yWorkout = (value) => top + innerH - (value / workoutMax) * innerH;
+  document.querySelector("#screenAxis").innerHTML = Array.from({ length: 5 }, (_, i) => `<span>${Math.round(screenMax * (1 - i / 4))}分</span>`).join("");
+  document.querySelector("#workoutAxis").innerHTML = Array.from({ length: 5 }, (_, i) => `<span>${Math.round(workoutMax * (1 - i / 4))}回</span>`).join("");
   let markup = "";
   for (let i = 0; i <= 4; i++) {
     const y = top + (i / 4) * innerH;
-    const value = Math.round(screenMax * (1 - i / 4));
-    markup += `<line class="grid-line" x1="${left}" x2="${width-right}" y1="${y}" y2="${y}"/><text class="chart-label axis-label" text-anchor="end" x="35" y="${y+3}">${value}分</text>`;
-  }
-  for (let i = 0; i <= 4; i++) {
-    const y = top + (i / 4) * innerH;
-    const value = Math.round(workoutMax * (1 - i / 4));
-    markup += `<text class="chart-label axis-label axis-label-right" text-anchor="start" x="${width - right + 8}" y="${y+3}">${value}回</text>`;
+    markup += `<line class="grid-line" x1="${left}" x2="${width-right}" y1="${y}" y2="${y}"/>`;
   }
   keys.forEach((key, index) => {
     if (index % 2 === 0 || index === 13) markup += `<text class="chart-label" text-anchor="middle" x="${x(index)}" y="${height-8}">${formatShortDate(key)}</text>`;

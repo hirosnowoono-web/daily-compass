@@ -34,6 +34,9 @@ button { color: inherit; }
 .brand { color: inherit; text-decoration: none; font-size: 12px; font-weight: 800; letter-spacing: .2em; display: flex; align-items: center; gap: 12px; }
 .brand-mark { width: 35px; height: 35px; display: grid; place-items: center; border: 1px solid var(--ink); border-radius: 50%; letter-spacing: 0; font-family: Georgia, serif; font-size: 11px; }
 .header-actions { display: flex; gap: 10px; }
+.sync-button { min-height: 38px; border: 1px solid var(--line); background: rgba(255,255,255,.35); border-radius: 999px; padding: 0 13px; display: flex; align-items: center; gap: 7px; cursor: pointer; font-size: 11px; font-weight: 700; }
+.sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #b2b4af; }
+.sync-button.is-synced .sync-dot { background: #61a56f; box-shadow: 0 0 0 3px rgba(97,165,111,.15); }
 .icon-button, .today-pill, .date-control button { border: 1px solid var(--line); background: rgba(255,255,255,.3); cursor: pointer; }
 .icon-button { width: 38px; height: 38px; border-radius: 50%; font-size: 19px; }
 .today-pill { border-radius: 999px; padding: 0 19px; font-size: 13px; font-weight: 700; }
@@ -136,9 +139,10 @@ h1 em { color: var(--coral); font-weight: 400; }
   .topbar { height: calc(64px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); position: sticky; top: 0; z-index: 20; background: rgba(243,239,230,.92); backdrop-filter: blur(16px); }
   .brand { font-size: 10px; }
   .brand-mark { width: 32px; height: 32px; }
-  .icon-button, .today-pill { min-height: 44px; }
+  .icon-button, .today-pill, .sync-button { min-height: 44px; }
   .icon-button { width: 44px; }
   .today-pill { padding: 0 17px; }
+  .sync-button { padding: 0 11px; }
   .hero { padding: 36px 0 28px; min-height: auto; display: block; }
   .eyebrow { margin-bottom: 12px; }
   h1 { font-size: clamp(43px, 13vw, 58px); }
@@ -179,6 +183,7 @@ h1 em { color: var(--coral); font-weight: 400; }
 
 @media (max-width: 380px) {
   .brand > span:last-child { display: none; }
+  .today-pill { display: none; }
   .saved-badge { padding: 6px 9px; }
   .score-card { padding: 25px; }
 }
@@ -194,6 +199,7 @@ h1 em { color: var(--coral); font-weight: 400; }
         </a>
         <div class="header-actions">
           <button class="icon-button" id="exportButton" type="button" title="記録をダウンロード" aria-label="記録をダウンロード">↓</button>
+          <button class="sync-button" id="authButton" type="button"><span class="sync-dot"></span><span id="authLabel">Googleで同期</span></button>
           <button class="today-pill" id="jumpToday" type="button">今日</button>
         </div>
       </header>
@@ -252,7 +258,7 @@ h1 em { color: var(--coral); font-weight: 400; }
           </div>
 
           <div class="save-dock"><button class="save-button" type="submit"><span>記録を保存</span><span>↗</span></button></div>
-          <p class="privacy-note">データは、このブラウザの中だけに保存されます。</p>
+          <p class="privacy-note" id="syncStatus">ログインすると、iPhoneとMacで記録が同期されます。</p>
         </form>
 
         <aside class="side-stack">
@@ -290,6 +296,9 @@ h1 em { color: var(--coral); font-weight: 400; }
       </section>
     </main>
     <div class="toast" id="toast" role="status" aria-live="polite">保存しました</div>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
     <script>
 const STORAGE_KEY = "daily-compass-records-v1";
 const form = document.querySelector("#dailyForm");
@@ -322,6 +331,24 @@ const loadRecords = () => {
 };
 
 let records = loadRecords();
+let currentUser = null;
+let cloudDocument = null;
+let stopCloudListener = null;
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBMHEmf0OMqVq8wiwJ2uHtwJ1yNBwz-LIg",
+  authDomain: "daily-routine-app-f4f58.firebaseapp.com",
+  projectId: "daily-routine-app-f4f58",
+  storageBucket: "daily-routine-app-f4f58.firebasestorage.app",
+  messagingSenderId: "574672041299",
+  appId: "1:574672041299:web:7fdf66078950ec4551dda6"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
 
 const formatLongDate = (key) => new Intl.DateTimeFormat("ja-JP", { month: "long", day: "numeric", weekday: "long" }).format(fromDateKey(key));
 const formatShortDate = (key) => new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric" }).format(fromDateKey(key));
@@ -350,7 +377,7 @@ function showToast(message) {
   window.setTimeout(() => toast.classList.remove("show"), 1800);
 }
 
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const data = new FormData(form);
   records[dateInput.value] = {
@@ -361,6 +388,7 @@ form.addEventListener("submit", (event) => {
     updatedAt: new Date().toISOString()
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  await syncRecordsToCloud();
   loadFormForDate();
   renderAll();
   showToast("記録を保存しました");
@@ -491,6 +519,78 @@ function renderAll() { renderHistory(); renderChart(); }
 dateInput.value = todayKey();
 loadFormForDate();
 renderAll();
+
+function mergeRecordSets(localRecords, cloudRecords) {
+  const merged = { ...cloudRecords };
+  Object.entries(localRecords).forEach(([date, localRecord]) => {
+    const cloudRecord = cloudRecords[date];
+    const localTime = Date.parse(localRecord?.updatedAt || 0) || 0;
+    const cloudTime = Date.parse(cloudRecord?.updatedAt || 0) || 0;
+    if (!cloudRecord || localTime >= cloudTime) merged[date] = localRecord;
+  });
+  return merged;
+}
+
+async function syncRecordsToCloud() {
+  if (!currentUser || !cloudDocument) return;
+  try {
+    await cloudDocument.set({ records, syncedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    document.querySelector("#syncStatus").textContent = "Googleアカウントに同期済みです。";
+  } catch {
+    document.querySelector("#syncStatus").textContent = "同期できませんでした。通信状態をご確認ください。";
+  }
+}
+
+document.querySelector("#authButton").addEventListener("click", async () => {
+  try {
+    if (currentUser) {
+      await auth.signOut();
+    } else {
+      await auth.signInWithPopup(googleProvider);
+    }
+  } catch {
+    showToast("Googleログインを完了できませんでした");
+  }
+});
+
+auth.onAuthStateChanged(async (user) => {
+  currentUser = user;
+  const authButton = document.querySelector("#authButton");
+  const authLabel = document.querySelector("#authLabel");
+  if (stopCloudListener) { stopCloudListener(); stopCloudListener = null; }
+
+  if (!user) {
+    cloudDocument = null;
+    authButton.classList.remove("is-synced");
+    authLabel.textContent = "Googleで同期";
+    document.querySelector("#syncStatus").textContent = "ログインすると、iPhoneとMacで記録が同期されます。";
+    return;
+  }
+
+  authButton.classList.add("is-synced");
+  authLabel.textContent = `${user.displayName || "ログイン中"}・ログアウト`;
+  document.querySelector("#syncStatus").textContent = "クラウドの記録を読み込んでいます…";
+  cloudDocument = db.collection("users").doc(user.uid).collection("data").doc("records");
+
+  try {
+    const snapshot = await cloudDocument.get();
+    const cloudRecords = snapshot.exists ? (snapshot.data().records || {}) : {};
+    records = mergeRecordSets(loadRecords(), cloudRecords);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    await syncRecordsToCloud();
+    loadFormForDate();
+    renderAll();
+    stopCloudListener = cloudDocument.onSnapshot((nextSnapshot) => {
+      if (!nextSnapshot.exists) return;
+      records = nextSnapshot.data().records || {};
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+      loadFormForDate();
+      renderAll();
+    });
+  } catch {
+    document.querySelector("#syncStatus").textContent = "クラウドへ接続できませんでした。";
+  }
+});
 
 </script>
   </body>

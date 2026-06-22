@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f5f1e8" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Compass" />
+    <title>Daily Compass</title>
+    <style>
+:root {
+  --paper: #f3efe6;
+  --card: #fbf9f4;
+  --ink: #24312e;
+  --muted: #7c827c;
+  --line: #d9d5ca;
+  --coral: #e56f55;
+  --sage: #9bad91;
+  --deep-sage: #617660;
+  --shadow: 0 18px 50px rgba(50, 55, 46, 0.08);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: Inter, "Hiragino Sans", "Yu Gothic", sans-serif; }
+body { -webkit-tap-highlight-color: transparent; }
+button, input { font: inherit; }
+button { color: inherit; }
+.shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding-bottom: 70px; }
+.topbar { height: 88px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.brand { color: inherit; text-decoration: none; font-size: 12px; font-weight: 800; letter-spacing: .2em; display: flex; align-items: center; gap: 12px; }
+.brand-mark { width: 35px; height: 35px; display: grid; place-items: center; border: 1px solid var(--ink); border-radius: 50%; letter-spacing: 0; font-family: Georgia, serif; font-size: 11px; }
+.header-actions { display: flex; gap: 10px; }
+.icon-button, .today-pill, .date-control button { border: 1px solid var(--line); background: rgba(255,255,255,.3); cursor: pointer; }
+.icon-button { width: 38px; height: 38px; border-radius: 50%; font-size: 19px; }
+.today-pill { border-radius: 999px; padding: 0 19px; font-size: 13px; font-weight: 700; }
+.hero { min-height: 320px; padding: 68px 0 56px; display: flex; justify-content: space-between; align-items: flex-end; }
+.eyebrow, .section-number { color: var(--coral); font-size: 10px; font-weight: 800; letter-spacing: .2em; margin: 0 0 15px; }
+h1 { font-family: Georgia, "Yu Mincho", serif; font-size: clamp(48px, 6vw, 78px); font-weight: 400; line-height: .98; margin: 0; letter-spacing: -.04em; }
+h1 em { color: var(--coral); font-weight: 400; }
+.hero-copy { color: var(--muted); margin: 26px 0 0; font-size: 14px; }
+.date-control { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,.32); padding: 6px; border: 1px solid var(--line); border-radius: 999px; }
+.date-control button { border: 0; background: transparent; width: 34px; height: 34px; border-radius: 50%; }
+.date-control button:hover { background: var(--card); }
+.date-control input { border: 0; background: transparent; color: var(--ink); font-weight: 700; padding: 5px; outline: 0; }
+.layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(260px, .75fr); gap: 24px; align-items: start; }
+.card { background: var(--card); border: 1px solid rgba(90, 95, 84, .1); border-radius: 4px; box-shadow: var(--shadow); }
+.entry-card { padding: 34px 38px 27px; }
+.section-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+.section-heading h2 { margin: 0 0 28px; font-family: Georgia, "Yu Mincho", serif; font-size: 27px; font-weight: 400; }
+.saved-badge, .streak { color: var(--muted); border: 1px solid var(--line); padding: 7px 11px; border-radius: 999px; font-size: 11px; }
+.saved-badge.is-saved { color: var(--deep-sage); background: #e7eee3; border-color: transparent; }
+.field-row, .question-row { min-height: 85px; display: grid; grid-template-columns: 44px 1fr auto; gap: 14px; align-items: center; border-top: 1px solid var(--line); }
+.field-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: #e7eee3; color: var(--deep-sage); font-family: Georgia, serif; font-size: 18px; }
+.field-copy { display: flex; flex-direction: column; gap: 5px; }
+.field-copy strong { font-size: 14px; }
+.field-copy small { color: var(--muted); font-size: 11px; }
+.number-input { display: flex; align-items: baseline; gap: 8px; }
+.number-input input { width: 85px; border: 0; border-bottom: 1px solid var(--ink); background: transparent; text-align: right; font-family: Georgia, serif; font-size: 30px; color: var(--ink); outline: 0; padding: 4px; }
+.number-input b { font-size: 12px; }
+.segmented { display: flex; padding: 4px; border: 1px solid var(--line); border-radius: 999px; }
+.segmented input { position: absolute; opacity: 0; pointer-events: none; }
+.segmented label { font-size: 11px; font-weight: 700; padding: 8px 12px; border-radius: 999px; color: var(--muted); cursor: pointer; }
+.segmented input:checked + label { color: #fff; background: var(--deep-sage); }
+.save-button { width: 100%; min-height: 54px; border: 0; background: var(--ink); color: white; margin-top: 22px; padding: 17px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: 700; }
+.save-button:hover { background: #35433f; }
+.privacy-note { color: var(--muted); font-size: 10px; text-align: center; margin: 13px 0 0; }
+.side-stack { display: grid; gap: 24px; }
+.score-card { padding: 30px; background: var(--ink); color: white; box-shadow: var(--shadow); }
+.score-card .section-number { color: #cbd6c7; }
+.score-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.big-score { font-family: Georgia, serif; font-size: 64px; line-height: 1; }
+.score-unit { color: #c8d0cb; }
+.trend { background: rgba(255,255,255,.1); border-radius: 999px; padding: 6px 9px; font-size: 9px; }
+.score-card h3 { margin: 16px 0 5px; font-family: Georgia, "Yu Mincho", serif; font-size: 18px; font-weight: 400; }
+.score-card > p:not(.section-number) { color: #9eaaa5; font-size: 10px; margin: 0; }
+.week-dots { display: grid; grid-template-columns: repeat(7, 1fr); gap: 7px; margin-top: 28px; }
+.day-dot { text-align: center; }
+.day-dot i { display: block; height: 34px; border-radius: 2px; background: rgba(255,255,255,.08); margin-bottom: 7px; }
+.day-dot.good i { background: var(--coral); }
+.day-dot.half i { background: linear-gradient(to top, var(--coral) 50%, rgba(255,255,255,.08) 50%); }
+.day-dot span { color: #84908b; font-size: 8px; }
+.quote-card { padding: 31px; border: 1px solid var(--line); min-height: 155px; display: flex; gap: 14px; align-items: flex-start; }
+.quote-card span { color: var(--coral); font-family: Georgia, serif; font-size: 48px; line-height: .8; }
+.quote-card p { font-family: Georgia, "Yu Mincho", serif; font-size: 17px; line-height: 1.8; margin: 5px 0 0; }
+.chart-card { margin-top: 24px; padding: 34px 38px 30px; }
+.chart-heading { align-items: flex-start; }
+.legend { display: flex; gap: 18px; color: var(--muted); font-size: 10px; padding-top: 7px; }
+.legend span { display: flex; align-items: center; gap: 6px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.coral { background: var(--coral); } .ink { background: var(--ink); }
+.chart-wrap { position: relative; min-height: 280px; }
+#trendChart { width: 100%; min-height: 260px; overflow: visible; }
+.grid-line { stroke: #dfdbd1; stroke-width: 1; stroke-dasharray: 3 6; }
+.chart-label { fill: #969991; font-size: 9px; font-family: sans-serif; }
+.screen-line { fill: none; stroke: var(--coral); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.workout-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 5 5; }
+.point-screen { fill: var(--coral); stroke: var(--card); stroke-width: 3; }
+.point-workout { fill: var(--ink); stroke: var(--card); stroke-width: 3; }
+.empty-chart { position: absolute; inset: 0; display: none; flex-direction: column; justify-content: center; align-items: center; color: var(--muted); gap: 8px; text-align: center; }
+.empty-chart strong { color: var(--ink); font-family: Georgia, "Yu Mincho", serif; font-weight: 400; font-size: 20px; }
+.empty-chart span { font-size: 11px; }
+.history-section { padding-top: 58px; }
+.history-list { border-top: 1px solid var(--line); }
+.history-row { display: grid; grid-template-columns: 110px 1fr 1fr 1.2fr auto; gap: 20px; align-items: center; min-height: 70px; border-bottom: 1px solid var(--line); font-size: 12px; cursor: pointer; }
+.history-row:hover { padding-left: 8px; padding-right: 8px; background: rgba(255,255,255,.25); }
+.history-date { font-weight: 800; }
+.history-row small { display: block; color: var(--muted); margin-top: 3px; }
+.status-pair { display: flex; gap: 7px; }
+.status-chip { padding: 6px 9px; border-radius: 999px; background: #deded8; color: #7a7e77; font-size: 9px; }
+.status-chip.yes { background: #dfe9dc; color: var(--deep-sage); }
+.edit-arrow { font-size: 17px; }
+.history-empty { color: var(--muted); text-align: center; padding: 38px; font-size: 12px; }
+.toast { position: fixed; bottom: 28px; left: 50%; transform: translate(-50%, 30px); background: var(--ink); color: white; padding: 12px 20px; border-radius: 999px; opacity: 0; pointer-events: none; transition: .25s ease; font-size: 12px; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 760px) {
+  body { padding-bottom: env(safe-area-inset-bottom); }
+  .shell { width: min(100% - 24px, 600px); padding-bottom: 42px; }
+  .topbar { height: calc(64px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); position: sticky; top: 0; z-index: 20; background: rgba(243,239,230,.92); backdrop-filter: blur(16px); }
+  .brand { font-size: 10px; }
+  .brand-mark { width: 32px; height: 32px; }
+  .icon-button, .today-pill { min-height: 44px; }
+  .icon-button { width: 44px; }
+  .today-pill { padding: 0 17px; }
+  .hero { padding: 36px 0 28px; min-height: auto; display: block; }
+  .eyebrow { margin-bottom: 12px; }
+  h1 { font-size: clamp(43px, 13vw, 58px); }
+  .hero-copy { line-height: 1.7; margin-top: 18px; }
+  .date-control { width: 100%; margin-top: 25px; justify-content: space-between; padding: 5px 8px; }
+  .date-control button { width: 44px; height: 44px; font-size: 18px; }
+  .date-control input { min-height: 44px; font-size: 16px; text-align: center; }
+  .layout { grid-template-columns: 1fr; }
+  .entry-card, .chart-card { padding: 24px 18px; border-radius: 12px; }
+  .section-heading h2 { margin-bottom: 20px; }
+  .field-row, .question-row { grid-template-columns: 44px 1fr; gap: 12px; min-height: 0; padding: 18px 0; }
+  .field-icon { width: 42px; height: 42px; }
+  .field-copy strong { font-size: 15px; }
+  .field-copy small { font-size: 11px; line-height: 1.5; }
+  .number-input, .segmented { grid-column: 1 / 3; width: 100%; justify-self: stretch; }
+  .number-input { background: var(--paper); border-radius: 9px; padding: 4px 14px; justify-content: space-between; align-items: center; }
+  .number-input input { width: 100%; min-height: 48px; border: 0; text-align: left; font-size: 32px; }
+  .number-input b { font-size: 14px; }
+  .segmented { padding: 5px; border-radius: 12px; }
+  .segmented label { width: 50%; min-height: 46px; display: grid; place-items: center; font-size: 13px; border-radius: 8px; }
+  .save-dock { position: sticky; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 10; margin: 8px -7px 0; padding: 7px; background: rgba(251,249,244,.88); backdrop-filter: blur(12px); border-radius: 12px; }
+  .save-button { margin-top: 0; min-height: 58px; border-radius: 8px; font-size: 15px; box-shadow: 0 10px 25px rgba(36,49,46,.18); }
+  .privacy-note { margin-top: 9px; }
+  .side-stack { gap: 14px; }
+  .score-card { border-radius: 12px; }
+  .chart-heading { display: block; }
+  .legend { margin: -15px 0 18px; }
+  .chart-wrap { min-height: 220px; overflow-x: auto; overflow-y: hidden; }
+  #trendChart { min-width: 660px; min-height: 220px; }
+  .history-section { padding-top: 42px; }
+  .history-row { grid-template-columns: 80px 1fr 1fr; gap: 10px; padding: 12px 0; }
+  .status-pair { grid-column: 2 / 4; }
+  .edit-arrow { display: none; }
+  .toast { bottom: calc(24px + env(safe-area-inset-bottom)); white-space: nowrap; }
+}
+
+@media (max-width: 380px) {
+  .brand > span:last-child { display: none; }
+  .saved-badge { padding: 6px 9px; }
+  .score-card { padding: 25px; }
+}
+
+</style>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Daily Compass ホーム">
+          <span class="brand-mark">DC</span>
+          <span>DAILY COMPASS</span>
+        </a>
+        <div class="header-actions">
+          <button class="icon-button" id="exportButton" type="button" title="記録をダウンロード" aria-label="記録をダウンロード">↓</button>
+          <button class="today-pill" id="jumpToday" type="button">今日</button>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div>
+          <p class="eyebrow" id="dateLabel">TODAY</p>
+          <h1>今日を、<br /><em>ちょうどよく。</em></h1>
+          <p class="hero-copy">小さな選択を記録して、自分のペースを見つけよう。</p>
+        </div>
+        <div class="date-control">
+          <button id="previousDay" type="button" aria-label="前の日">←</button>
+          <input id="recordDate" type="date" aria-label="記録する日" />
+          <button id="nextDay" type="button" aria-label="次の日">→</button>
+        </div>
+      </section>
+
+      <section class="layout">
+        <form class="card entry-card" id="dailyForm">
+          <div class="section-heading">
+            <div>
+              <p class="section-number">01 / DAILY LOG</p>
+              <h2>今日の記録</h2>
+            </div>
+            <span class="saved-badge" id="savedBadge" aria-live="polite">未記録</span>
+          </div>
+
+          <label class="field-row" for="screenTime">
+            <span class="field-icon phone-icon">▯</span>
+            <span class="field-copy"><strong>スクリーンタイム</strong><small>スマホを見ていた時間</small></span>
+            <span class="number-input"><input id="screenTime" name="screenTime" type="number" min="0" max="1440" inputmode="numeric" placeholder="0" required /><b>分</b></span>
+          </label>
+
+          <label class="field-row" for="workoutCount">
+            <span class="field-icon">↗</span>
+            <span class="field-copy"><strong>筋トレ</strong><small>今日こなした回数</small></span>
+            <span class="number-input"><input id="workoutCount" name="workoutCount" type="number" min="0" max="9999" inputmode="numeric" placeholder="0" required /><b>回</b></span>
+          </label>
+
+          <div class="question-row">
+            <span class="field-icon">◷</span>
+            <span class="field-copy"><strong>22:30までに動画をやめた</strong><small>夜の時間を取り戻せた？</small></span>
+            <div class="segmented" role="group" aria-label="22時30分までに動画をやめたか">
+              <input id="videoYes" type="radio" name="stoppedVideo" value="true" required /><label for="videoYes">できた</label>
+              <input id="videoNo" type="radio" name="stoppedVideo" value="false" /><label for="videoNo">できず</label>
+            </div>
+          </div>
+
+          <div class="question-row">
+            <span class="field-icon">¥</span>
+            <span class="field-copy"><strong>証券口座を開かなかった</strong><small>Money Forwardを見ずに過ごせた？</small></span>
+            <div class="segmented" role="group" aria-label="証券口座を開かなかったか">
+              <input id="moneyYes" type="radio" name="avoidedMoneyForward" value="true" required /><label for="moneyYes">できた</label>
+              <input id="moneyNo" type="radio" name="avoidedMoneyForward" value="false" /><label for="moneyNo">できず</label>
+            </div>
+          </div>
+
+          <div class="save-dock"><button class="save-button" type="submit"><span>記録を保存</span><span>↗</span></button></div>
+          <p class="privacy-note">データは、このブラウザの中だけに保存されます。</p>
+        </form>
+
+        <aside class="side-stack">
+          <section class="card score-card">
+            <p class="section-number">02 / THIS WEEK</p>
+            <div class="score-top">
+              <div><span class="big-score" id="weekScore">—</span><span class="score-unit">%</span></div>
+              <span class="trend" id="weekTrend">直近7日</span>
+            </div>
+            <h3>夜の習慣 達成率</h3>
+            <p>2つの「できた」をもとに計算</p>
+            <div class="week-dots" id="weekDots" aria-label="直近7日の達成状況"></div>
+          </section>
+
+          <section class="quote-card">
+            <span>“</span>
+            <p>完璧じゃなくていい。<br />昨日より少し、自分にやさしく。</p>
+          </section>
+        </aside>
+      </section>
+
+      <section class="card chart-card">
+        <div class="section-heading chart-heading">
+          <div>
+            <p class="section-number">03 / TRENDS</p>
+            <h2>14日間の変化</h2>
+          </div>
+          <div class="legend"><span><i class="dot coral"></i>スクリーンタイム</span><span><i class="dot ink"></i>筋トレ</span></div>
+        </div>
+        <div class="chart-wrap">
+          <svg id="trendChart" viewBox="0 0 900 280" role="img" aria-label="14日間のスクリーンタイムと筋トレ回数のグラフ"></svg>
+          <div class="empty-chart" id="emptyChart"><strong>最初の記録をつけよう</strong><span>2日以上記録すると、変化が線で見えてきます。</span></div>
+        </div>
+      </section>
+
+      <section class="history-section">
+        <div class="section-heading">
+          <div><p class="section-number">04 / HISTORY</p><h2>最近の記録</h2></div>
+          <span class="streak" id="streakLabel">連続記録 0日</span>
+        </div>
+        <div class="history-list" id="historyList"></div>
+      </section>
+    </main>
+    <div class="toast" id="toast" role="status" aria-live="polite">保存しました</div>
+    <script>
+const STORAGE_KEY = "daily-compass-records-v1";
+const form = document.querySelector("#dailyForm");
+const dateInput = document.querySelector("#recordDate");
+const savedBadge = document.querySelector("#savedBadge");
+const toast = document.querySelector("#toast");
+
+const todayKey = () => {
+  const date = new Date();
+  return toDateKey(date);
+};
+
+const toDateKey = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+const fromDateKey = (key) => new Date(`${key}T12:00:00`);
+const addDays = (key, amount) => {
+  const date = fromDateKey(key);
+  date.setDate(date.getDate() + amount);
+  return toDateKey(date);
+};
+
+const loadRecords = () => {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+  catch { return {}; }
+};
+
+let records = loadRecords();
+
+const formatLongDate = (key) => new Intl.DateTimeFormat("ja-JP", { month: "long", day: "numeric", weekday: "long" }).format(fromDateKey(key));
+const formatShortDate = (key) => new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric" }).format(fromDateKey(key));
+
+function setRadio(name, value) {
+  document.querySelectorAll(`[name="${name}"]`).forEach((input) => {
+    input.checked = value !== undefined && input.value === String(value);
+  });
+}
+
+function loadFormForDate() {
+  const key = dateInput.value;
+  const record = records[key];
+  document.querySelector("#dateLabel").textContent = key === todayKey() ? `TODAY — ${formatLongDate(key)}` : formatLongDate(key);
+  document.querySelector("#screenTime").value = record?.screenTime ?? "";
+  document.querySelector("#workoutCount").value = record?.workoutCount ?? "";
+  setRadio("stoppedVideo", record?.stoppedVideo);
+  setRadio("avoidedMoneyForward", record?.avoidedMoneyForward);
+  savedBadge.textContent = record ? "保存済み" : "未記録";
+  savedBadge.classList.toggle("is-saved", Boolean(record));
+}
+
+function showToast(message) {
+  toast.textContent = message;
+  toast.classList.add("show");
+  window.setTimeout(() => toast.classList.remove("show"), 1800);
+}
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const data = new FormData(form);
+  records[dateInput.value] = {
+    screenTime: Number(data.get("screenTime")),
+    workoutCount: Number(data.get("workoutCount")),
+    stoppedVideo: data.get("stoppedVideo") === "true",
+    avoidedMoneyForward: data.get("avoidedMoneyForward") === "true",
+    updatedAt: new Date().toISOString()
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  loadFormForDate();
+  renderAll();
+  showToast("記録を保存しました");
+});
+
+function moveDate(days) {
+  dateInput.value = addDays(dateInput.value, days);
+  loadFormForDate();
+}
+
+document.querySelector("#previousDay").addEventListener("click", () => moveDate(-1));
+document.querySelector("#nextDay").addEventListener("click", () => moveDate(1));
+document.querySelector("#jumpToday").addEventListener("click", () => { dateInput.value = todayKey(); loadFormForDate(); });
+dateInput.addEventListener("change", loadFormForDate);
+
+function recentKeys(days) {
+  return Array.from({ length: days }, (_, index) => addDays(todayKey(), index - days + 1));
+}
+
+function renderWeek() {
+  const keys = recentKeys(7);
+  let achieved = 0;
+  let possible = 0;
+  const dots = keys.map((key) => {
+    const record = records[key];
+    const score = record ? Number(record.stoppedVideo) + Number(record.avoidedMoneyForward) : 0;
+    if (record) { achieved += score; possible += 2; }
+    const weekday = new Intl.DateTimeFormat("ja-JP", { weekday: "short" }).format(fromDateKey(key)).replace("曜日", "");
+    return `<div class="day-dot ${score === 2 ? "good" : score === 1 ? "half" : ""}" title="${formatShortDate(key)}: ${record ? `${score}/2 達成` : "未記録"}"><i></i><span>${weekday}</span></div>`;
+  }).join("");
+  document.querySelector("#weekDots").innerHTML = dots;
+  document.querySelector("#weekScore").textContent = possible ? Math.round(achieved / possible * 100) : "—";
+  document.querySelector(".score-unit").style.display = possible ? "inline" : "none";
+}
+
+function calculateStreak() {
+  let cursor = records[todayKey()] ? todayKey() : addDays(todayKey(), -1);
+  let streak = 0;
+  while (records[cursor]) { streak += 1; cursor = addDays(cursor, -1); }
+  return streak;
+}
+
+function renderHistory() {
+  const keys = Object.keys(records).sort().reverse().slice(0, 7);
+  const list = document.querySelector("#historyList");
+  document.querySelector("#streakLabel").textContent = `連続記録 ${calculateStreak()}日`;
+  if (!keys.length) {
+    list.innerHTML = `<div class="history-empty">まだ記録がありません。今日から始めましょう。</div>`;
+    return;
+  }
+  list.innerHTML = keys.map((key) => {
+    const item = records[key];
+    const weekday = new Intl.DateTimeFormat("ja-JP", { weekday: "short" }).format(fromDateKey(key));
+    return `<article class="history-row" data-date="${key}" tabindex="0">
+      <div class="history-date">${formatShortDate(key)}<small>${weekday}</small></div>
+      <div>${item.screenTime}分<small>スクリーン</small></div>
+      <div>${item.workoutCount}回<small>筋トレ</small></div>
+      <div class="status-pair"><span class="status-chip ${item.stoppedVideo ? "yes" : ""}">動画 ${item.stoppedVideo ? "○" : "—"}</span><span class="status-chip ${item.avoidedMoneyForward ? "yes" : ""}">証券 ${item.avoidedMoneyForward ? "○" : "—"}</span></div>
+      <span class="edit-arrow">→</span>
+    </article>`;
+  }).join("");
+  list.querySelectorAll(".history-row").forEach((row) => {
+    const open = () => { dateInput.value = row.dataset.date; loadFormForDate(); form.scrollIntoView({ behavior: "smooth", block: "center" }); };
+    row.addEventListener("click", open);
+    row.addEventListener("keydown", (event) => { if (event.key === "Enter") open(); });
+  });
+}
+
+function renderChart() {
+  const svg = document.querySelector("#trendChart");
+  const keys = recentKeys(14);
+  const available = keys.filter((key) => records[key]);
+  document.querySelector("#emptyChart").style.display = available.length ? "none" : "flex";
+  svg.style.opacity = available.length ? "1" : ".25";
+  const width = 900, height = 280, left = 42, right = 22, top = 18, bottom = 35;
+  const innerW = width - left - right, innerH = height - top - bottom;
+  const screenMax = Math.max(120, ...available.map((key) => records[key].screenTime));
+  const workoutMax = Math.max(10, ...available.map((key) => records[key].workoutCount));
+  const x = (index) => left + (index / 13) * innerW;
+  const yScreen = (value) => top + innerH - (value / screenMax) * innerH;
+  const yWorkout = (value) => top + innerH - (value / workoutMax) * innerH;
+  let markup = "";
+  for (let i = 0; i <= 4; i++) {
+    const y = top + (i / 4) * innerH;
+    const value = Math.round(screenMax * (1 - i / 4));
+    markup += `<line class="grid-line" x1="${left}" x2="${width-right}" y1="${y}" y2="${y}"/><text class="chart-label" x="0" y="${y+3}">${value}分</text>`;
+  }
+  keys.forEach((key, index) => {
+    if (index % 2 === 0 || index === 13) markup += `<text class="chart-label" text-anchor="middle" x="${x(index)}" y="${height-8}">${formatShortDate(key)}</text>`;
+  });
+  const segments = (valueKey, yFn, className, pointClass) => {
+    let result = "", points = [];
+    keys.forEach((key, index) => {
+      if (records[key]) points.push([x(index), yFn(records[key][valueKey])]);
+      else if (points.length) { result += draw(points, className, pointClass); points = []; }
+    });
+    if (points.length) result += draw(points, className, pointClass);
+    return result;
+  };
+  const draw = (points, className, pointClass) => `<polyline class="${className}" points="${points.map(p => p.join(",")).join(" ")}"/>${points.map(p => `<circle class="${pointClass}" cx="${p[0]}" cy="${p[1]}" r="5"/>`).join("")}`;
+  markup += segments("screenTime", yScreen, "screen-line", "point-screen");
+  markup += segments("workoutCount", yWorkout, "workout-line", "point-workout");
+  svg.innerHTML = markup;
+}
+
+document.querySelector("#exportButton").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(records, null, 2)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `daily-compass-${todayKey()}.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+  showToast("記録を書き出しました");
+});
+
+function renderAll() { renderWeek(); renderHistory(); renderChart(); }
+dateInput.value = todayKey();
+loadFormForDate();
+renderAll();
+
+</script>
+  </body>
+</html>

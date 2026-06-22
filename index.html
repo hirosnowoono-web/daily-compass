@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Compass" />
-    <title>Daily Compass</title>
+    <title>日々の積み上げ</title>
     <style>
 :root {
   --paper: #f3efe6;
@@ -94,6 +94,7 @@ h1 em { color: var(--coral); font-weight: 400; }
 #trendChart { width: 100%; min-height: 260px; overflow: visible; }
 .grid-line { stroke: #dfdbd1; stroke-width: 1; stroke-dasharray: 3 6; }
 .chart-label { fill: #969991; font-size: 9px; font-family: sans-serif; }
+.chart-value { fill: var(--coral); font-size: 10px; font-weight: 700; }
 .screen-line { fill: none; stroke: var(--coral); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .workout-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 5 5; }
 .point-screen { fill: var(--coral); stroke: var(--card); stroke-width: 3; }
@@ -184,7 +185,7 @@ h1 em { color: var(--coral); font-weight: 400; }
       <section class="hero">
         <div>
           <p class="eyebrow" id="dateLabel">TODAY</p>
-          <h1>今日を、<br /><em>ちょうどよく。</em></h1>
+          <h1><em>日々の積み上げ</em></h1>
           <p class="hero-copy">小さな選択を記録して、自分のペースを見つけよう。</p>
         </div>
         <div class="date-control">
@@ -261,12 +262,12 @@ h1 em { color: var(--coral); font-weight: 400; }
         <div class="section-heading chart-heading">
           <div>
             <p class="section-number">03 / TRENDS</p>
-            <h2>14日間の変化</h2>
+            <h2>スクリーンタイムの推移</h2>
           </div>
-          <div class="legend"><span><i class="dot coral"></i>スクリーンタイム</span><span><i class="dot ink"></i>筋トレ</span></div>
+          <div class="legend"><span><i class="dot coral"></i>1日の利用時間</span></div>
         </div>
         <div class="chart-wrap">
-          <svg id="trendChart" viewBox="0 0 900 280" role="img" aria-label="14日間のスクリーンタイムと筋トレ回数のグラフ"></svg>
+          <svg id="trendChart" viewBox="0 0 900 280" role="img" aria-label="14日間のスクリーンタイムのグラフ"></svg>
           <div class="empty-chart" id="emptyChart"><strong>最初の記録をつけよう</strong><span>2日以上記録すると、変化が線で見えてきます。</span></div>
         </div>
       </section>
@@ -428,10 +429,8 @@ function renderChart() {
   const width = 900, height = 280, left = 42, right = 22, top = 18, bottom = 35;
   const innerW = width - left - right, innerH = height - top - bottom;
   const screenMax = Math.max(120, ...available.map((key) => records[key].screenTime));
-  const workoutMax = Math.max(10, ...available.map((key) => records[key].workoutCount));
   const x = (index) => left + (index / 13) * innerW;
   const yScreen = (value) => top + innerH - (value / screenMax) * innerH;
-  const yWorkout = (value) => top + innerH - (value / workoutMax) * innerH;
   let markup = "";
   for (let i = 0; i <= 4; i++) {
     const y = top + (i / 4) * innerH;
@@ -452,7 +451,11 @@ function renderChart() {
   };
   const draw = (points, className, pointClass) => `<polyline class="${className}" points="${points.map(p => p.join(",")).join(" ")}"/>${points.map(p => `<circle class="${pointClass}" cx="${p[0]}" cy="${p[1]}" r="5"/>`).join("")}`;
   markup += segments("screenTime", yScreen, "screen-line", "point-screen");
-  markup += segments("workoutCount", yWorkout, "workout-line", "point-workout");
+  keys.forEach((key, index) => {
+    if (!records[key]) return;
+    const y = yScreen(records[key].screenTime);
+    markup += `<text class="chart-label chart-value" text-anchor="middle" x="${x(index)}" y="${Math.max(11, y - 11)}">${records[key].screenTime}分</text>`;
+  });
   svg.innerHTML = markup;
 }
 

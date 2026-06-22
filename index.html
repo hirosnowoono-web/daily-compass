@@ -250,17 +250,6 @@ h1 em { color: var(--coral); font-weight: 400; }
         </form>
 
         <aside class="side-stack">
-          <section class="card score-card">
-            <p class="section-number">02 / THIS WEEK</p>
-            <div class="score-top">
-              <div><span class="big-score" id="weekScore">—</span><span class="score-unit">%</span></div>
-              <span class="trend" id="weekTrend">直近7日</span>
-            </div>
-            <h3>夜の習慣 達成率</h3>
-            <p>2つの「できた」をもとに計算</p>
-            <div class="week-dots" id="weekDots" aria-label="直近7日の達成状況"></div>
-          </section>
-
           <section class="quote-card">
             <span>“</span>
             <p>完璧じゃなくていい。<br />昨日より少し、自分にやさしく。</p>
@@ -271,7 +260,7 @@ h1 em { color: var(--coral); font-weight: 400; }
       <section class="card chart-card">
         <div class="section-heading chart-heading">
           <div>
-            <p class="section-number">03 / TRENDS</p>
+            <p class="section-number">02 / TRENDS</p>
             <h2>スクリーンタイムの推移</h2>
           </div>
           <div class="legend"><span><i class="dot blue"></i>90分未満</span><span><i class="dot red"></i>90分以上</span><span><i class="dot ink"></i>筋トレ</span></div>
@@ -284,7 +273,7 @@ h1 em { color: var(--coral); font-weight: 400; }
 
       <section class="history-section">
         <div class="section-heading">
-          <div><p class="section-number">04 / HISTORY</p><h2>最近の記録</h2></div>
+          <div><p class="section-number">03 / HISTORY</p><h2>最近の記録</h2></div>
           <span class="streak" id="streakLabel">連続記録 0日</span>
         </div>
         <div class="history-list" id="historyList"></div>
@@ -492,7 +481,7 @@ document.querySelector("#exportButton").addEventListener("click", () => {
   showToast("記録を書き出しました");
 });
 
-function renderAll() { renderWeek(); renderHistory(); renderChart(); }
+function renderAll() { renderHistory(); renderChart(); }
 dateInput.value = todayKey();
 loadFormForDate();
 renderAll();

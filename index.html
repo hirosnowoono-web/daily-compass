@@ -99,7 +99,7 @@ h1 em { color: var(--coral); font-weight: 400; }
 .chart-wrap { position: relative; min-height: 280px; }
 .chart-scroll { overflow-x: auto; overflow-y: hidden; scrollbar-color: var(--sage) transparent; padding-bottom: 8px; }
 #trendChart { display: block; width: 100%; min-width: 900px; min-height: 260px; overflow: visible; }
-.chart-axis { position: absolute; z-index: 3; top: 17px; bottom: 43px; width: 48px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; color: var(--ink); font-size: 18px; font-weight: 800; line-height: 1; }
+.chart-axis { position: absolute; z-index: 3; top: 17px; bottom: 43px; width: 48px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; color: var(--ink); font-size: 13.5px; font-weight: 800; line-height: 1; }
 .chart-axis-left { left: 0; align-items: flex-end; padding-right: 7px; background: linear-gradient(90deg, var(--card) 75%, transparent); }
 .chart-axis-right { right: 0; align-items: flex-start; padding-left: 7px; color: var(--deep-sage); background: linear-gradient(270deg, var(--card) 75%, transparent); }
 .grid-line { stroke: #dfdbd1; stroke-width: 1; stroke-dasharray: 3 6; }
@@ -173,7 +173,7 @@ h1 em { color: var(--coral); font-weight: 400; }
   .chart-wrap { min-height: 300px; }
   .chart-scroll { margin: 0 37px; }
   #trendChart { min-width: 1000px; width: 1000px; min-height: 280px; }
-  .chart-axis { top: 18px; bottom: 48px; width: 42px; font-size: 17px; }
+  .chart-axis { top: 18px; bottom: 48px; width: 42px; font-size: 12.75px; }
   .history-section { padding-top: 42px; }
   .history-row { grid-template-columns: 80px 1fr 1fr; gap: 10px; padding: 12px 0; }
   .status-pair { grid-column: 2 / 4; }
@@ -465,11 +465,11 @@ function renderChart() {
   svg.style.opacity = available.length ? "1" : ".25";
   const width = 900, height = 280, left = 42, right = 48, top = 18, bottom = 35;
   const innerW = width - left - right, innerH = height - top - bottom;
-  const screenMax = Math.max(120, ...available.map((key) => records[key].screenTime));
+  const screenMax = 240;
   const workoutValues = available.map((key) => records[key].workoutCount).filter((value) => value != null);
   const workoutMax = Math.max(10, ...workoutValues);
   const x = (index) => left + (index / 13) * innerW;
-  const yScreen = (value) => top + innerH - (value / screenMax) * innerH;
+  const yScreen = (value) => top + innerH - (Math.min(value, screenMax) / screenMax) * innerH;
   const yWorkout = (value) => top + innerH - (value / workoutMax) * innerH;
   document.querySelector("#screenAxis").innerHTML = Array.from({ length: 5 }, (_, i) => `<span>${Math.round(screenMax * (1 - i / 4))}分</span>`).join("");
   document.querySelector("#workoutAxis").innerHTML = Array.from({ length: 5 }, (_, i) => `<span>${Math.round(workoutMax * (1 - i / 4))}回</span>`).join("");

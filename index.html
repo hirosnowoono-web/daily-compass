@@ -123,6 +123,7 @@ h1 em { color: var(--coral); font-weight: 400; }
 .empty-chart strong { color: var(--ink); font-family: Georgia, "Yu Mincho", serif; font-weight: 400; font-size: 20px; }
 .empty-chart span { font-size: 11px; }
 .history-section { padding-top: 58px; }
+.history-streaks { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .history-list { border-top: 1px solid var(--line); }
 .history-row { display: grid; grid-template-columns: 110px 1fr 1fr 1.2fr auto; gap: 20px; align-items: center; min-height: 70px; border-bottom: 1px solid var(--line); font-size: 12px; cursor: pointer; }
 .history-row:hover { padding-left: 8px; padding-right: 8px; background: rgba(255,255,255,.25); }
@@ -156,6 +157,7 @@ h1 em { color: var(--coral); font-weight: 400; }
   .layout { grid-template-columns: 1fr; }
   .entry-card, .chart-card { padding: 24px 18px; border-radius: 12px; }
   .section-heading h2 { margin-bottom: 20px; }
+  .history-streaks { justify-content: flex-start; margin-top: -10px; margin-bottom: 14px; }
   .field-row, .question-row { grid-template-columns: 44px 1fr; gap: 12px; min-height: 0; padding: 18px 0; }
   .field-icon { width: 42px; height: 42px; }
   .field-copy strong { font-size: 15px; }
@@ -276,7 +278,7 @@ h1 em { color: var(--coral); font-weight: 400; }
         <div class="section-heading chart-heading">
           <div>
             <p class="section-number">02 / TRENDS</p>
-            <h2>スクリーンタイムの推移</h2>
+            <h2>積み上げの記録</h2>
           </div>
           <div class="legend"><span><i class="dot blue"></i>90分未満</span><span><i class="dot red"></i>90分以上</span><span><i class="dot ink"></i>筋トレ</span></div>
         </div>
@@ -293,7 +295,10 @@ h1 em { color: var(--coral); font-weight: 400; }
       <section class="history-section">
         <div class="section-heading">
           <div><p class="section-number">03 / HISTORY</p><h2>最近の記録</h2></div>
-          <span class="streak" id="streakLabel">連続記録 0日</span>
+          <div class="history-streaks">
+            <span class="streak" id="streakLabel">連続記録 0日</span>
+            <span class="streak money-streak" id="moneyForwardStreakLabel">証券を開かない 0日</span>
+          </div>
         </div>
         <div class="history-list" id="historyList"></div>
       </section>
@@ -434,10 +439,21 @@ function calculateStreak() {
   return streak;
 }
 
+function calculateMoneyForwardStreak() {
+  let cursor = records[todayKey()] ? todayKey() : addDays(todayKey(), -1);
+  let streak = 0;
+  while (records[cursor]?.avoidedMoneyForward) {
+    streak += 1;
+    cursor = addDays(cursor, -1);
+  }
+  return streak;
+}
+
 function renderHistory() {
   const keys = Object.keys(records).sort().reverse().slice(0, 7);
   const list = document.querySelector("#historyList");
   document.querySelector("#streakLabel").textContent = `連続記録 ${calculateStreak()}日`;
+  document.querySelector("#moneyForwardStreakLabel").textContent = `証券を開かない ${calculateMoneyForwardStreak()}日`;
   if (!keys.length) {
     list.innerHTML = `<div class="history-empty">まだ記録がありません。今日から始めましょう。</div>`;
     return;

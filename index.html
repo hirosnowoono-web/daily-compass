@@ -113,6 +113,7 @@ h1 em { color: var(--coral); font-weight: 400; }
 .screen-bar { opacity: .86; }
 .screen-bar-high { fill: var(--red); }
 .screen-bar-low { fill: var(--blue); }
+.workout-bar { fill: var(--ink); opacity: .78; }
 .workout-line { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 5 5; }
 .point-screen { fill: var(--coral); stroke: var(--card); stroke-width: 3; }
 .point-workout { fill: var(--ink); stroke: var(--card); stroke-width: 3; }
@@ -172,7 +173,7 @@ h1 em { color: var(--coral); font-weight: 400; }
   .legend { margin: -15px 0 18px; }
   .chart-wrap { min-height: 300px; }
   .chart-scroll { margin: 0 37px; }
-  #trendChart { min-width: 1000px; width: 1000px; min-height: 280px; }
+  #trendChart { min-width: 780px; width: 780px; min-height: 280px; }
   .chart-axis { top: 18px; bottom: 48px; width: 42px; font-size: 12.75px; }
   .history-section { padding-top: 42px; }
   .history-row { grid-template-columns: 80px 1fr 1fr; gap: 10px; padding: 12px 0; }
@@ -481,28 +482,26 @@ function renderChart() {
   keys.forEach((key, index) => {
     if (index % 2 === 0 || index === 13) markup += `<text class="chart-label" text-anchor="middle" x="${x(index)}" y="${height-8}">${formatShortDate(key)}</text>`;
   });
-  const segments = (valueKey, yFn, className, pointClass) => {
-    let result = "", points = [];
-    keys.forEach((key, index) => {
-      const value = records[key]?.[valueKey];
-      const shouldPlot = value != null && !(valueKey === "workoutCount" && value === 0);
-      if (shouldPlot) points.push([x(index), yFn(value)]);
-      else if (points.length) { result += draw(points, className, pointClass); points = []; }
-    });
-    if (points.length) result += draw(points, className, pointClass);
-    return result;
-  };
-  const draw = (points, className, pointClass) => `<polyline class="${className}" points="${points.map(p => p.join(",")).join(" ")}"/>${points.map(p => `<circle class="${pointClass}" cx="${p[0]}" cy="${p[1]}" r="5"/>`).join("")}`;
   keys.forEach((key, index) => {
     if (!records[key]) return;
     const y = yScreen(records[key].screenTime);
-    const barWidth = 32;
+    const barWidth = 24;
     const level = records[key].screenTime >= 90 ? "high" : "low";
-    markup += `<rect class="screen-bar screen-bar-${level}" x="${x(index) - barWidth / 2}" y="${y}" width="${barWidth}" height="${top + innerH - y}" rx="5"/>`;
-    markup += `<text class="chart-label chart-value chart-value-${level}" text-anchor="middle" x="${x(index)}" y="${Math.max(11, y - 11)}">${records[key].screenTime}分</text>`;
+    markup += `<rect class="screen-bar screen-bar-${level}" x="${x(index) - 25}" y="${y}" width="${barWidth}" height="${top + innerH - y}" rx="5"/>`;
+    markup += `<text class="chart-label chart-value chart-value-${level}" text-anchor="middle" x="${x(index) - 13}" y="${Math.max(11, y - 11)}">${records[key].screenTime}分</text>`;
+    const workoutValue = records[key].workoutCount;
+    if (workoutValue != null && workoutValue > 0) {
+      const workoutY = yWorkout(workoutValue);
+      markup += `<rect class="workout-bar" x="${x(index) + 5}" y="${workoutY}" width="16" height="${top + innerH - workoutY}" rx="4"/>`;
+    }
   });
-  markup += segments("workoutCount", yWorkout, "workout-line", "point-workout");
   svg.innerHTML = markup;
+  const chartScroll = document.querySelector(".chart-scroll");
+  if (window.matchMedia("(max-width: 760px)").matches) {
+    requestAnimationFrame(() => {
+      chartScroll.scrollLeft = chartScroll.scrollWidth - chartScroll.clientWidth;
+    });
+  }
 }
 
 document.querySelector("#exportButton").addEventListener("click", () => {

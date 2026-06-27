@@ -497,10 +497,13 @@ function renderChart() {
   });
   svg.innerHTML = markup;
   const chartScroll = document.querySelector(".chart-scroll");
+  const scrollToLatest = () => {
+    chartScroll.scrollLeft = chartScroll.scrollWidth - chartScroll.clientWidth;
+  };
   if (window.matchMedia("(max-width: 760px)").matches) {
-    requestAnimationFrame(() => {
-      chartScroll.scrollLeft = chartScroll.scrollWidth - chartScroll.clientWidth;
-    });
+    requestAnimationFrame(scrollToLatest);
+    setTimeout(scrollToLatest, 100);
+    setTimeout(scrollToLatest, 500);
   }
 }
 

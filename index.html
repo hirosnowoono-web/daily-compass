@@ -111,6 +111,7 @@ h1 em { color: var(--coral); font-weight: 400; }
 .chart-value { font-size: 18px; font-weight: 800; }
 .chart-value-high { fill: var(--red); }
 .chart-value-low { fill: var(--blue); }
+.workout-value { fill: var(--ink); }
 .screen-line { fill: none; stroke: var(--coral); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .screen-bar { opacity: .86; }
 .screen-bar-high { fill: var(--red); }
@@ -511,6 +512,7 @@ function renderChart() {
     if (workoutValue != null && workoutValue > 0) {
       const workoutY = yWorkout(workoutValue);
       markup += `<rect class="workout-bar" x="${x(index) + 5}" y="${workoutY}" width="16" height="${top + innerH - workoutY}" rx="4"/>`;
+      markup += `<text class="chart-label chart-value workout-value" text-anchor="middle" x="${x(index) + 13}" y="${Math.max(11, workoutY - 11)}">${workoutValue}回</text>`;
     }
   });
   svg.innerHTML = markup;

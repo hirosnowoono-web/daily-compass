@@ -486,13 +486,16 @@ function renderChart() {
   const width = 900, height = 280, left = 42, right = 48, top = 18, bottom = 35;
   const innerW = width - left - right, innerH = height - top - bottom;
   const screenMax = 240;
-  const workoutValues = available.map((key) => records[key].workoutCount).filter((value) => value != null);
-  const workoutMax = Math.max(10, ...workoutValues);
+  const workoutMin = 20;
+  const workoutMax = 60;
   const x = (index) => left + (index / 13) * innerW;
   const yScreen = (value) => top + innerH - (Math.min(value, screenMax) / screenMax) * innerH;
-  const yWorkout = (value) => top + innerH - (value / workoutMax) * innerH;
+  const yWorkout = (value) => {
+    const clamped = Math.min(Math.max(value, workoutMin), workoutMax);
+    return top + innerH - ((clamped - workoutMin) / (workoutMax - workoutMin)) * innerH;
+  };
   document.querySelector("#screenAxis").innerHTML = Array.from({ length: 5 }, (_, i) => `<span>${Math.round(screenMax * (1 - i / 4))}分</span>`).join("");
-  document.querySelector("#workoutAxis").innerHTML = Array.from({ length: 5 }, (_, i) => `<span>${Math.round(workoutMax * (1 - i / 4))}回</span>`).join("");
+  document.querySelector("#workoutAxis").innerHTML = Array.from({ length: 5 }, (_, i) => `<span>${Math.round(workoutMax - ((workoutMax - workoutMin) * i / 4))}回</span>`).join("");
   let markup = "";
   for (let i = 0; i <= 4; i++) {
     const y = top + (i / 4) * innerH;

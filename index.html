@@ -270,7 +270,7 @@ h1 em { color: var(--coral); font-weight: 400; }
         <aside class="side-stack">
           <section class="quote-card">
             <span>“</span>
-            <p>完璧じゃなくていい。<br />昨日より少し、自分にやさしく。</p>
+            <p id="quoteText">完璧じゃなくていい。<br />昨日より少し、自分にやさしく。</p>
           </section>
         </aside>
       </section>
@@ -314,6 +314,40 @@ const form = document.querySelector("#dailyForm");
 const dateInput = document.querySelector("#recordDate");
 const savedBadge = document.querySelector("#savedBadge");
 const toast = document.querySelector("#toast");
+const quoteFirstLines = [
+  "完璧じゃなくていい。",
+  "小さな一歩も、",
+  "今日の自分を、",
+  "できた日も、できなかった日も、",
+  "迷ったら、",
+  "積み上げは静かだけど、",
+  "全部変えなくていい。",
+  "続けるコツは、",
+  "記録できた日は、",
+  "うまくいかない日ほど、",
+  "昨日の続きじゃなくていい。",
+  "気分が乗らない日も、",
+  "今日の小さな勝ちは、",
+  "焦らなくていい。",
+  "やめなかったことは、",
+  "自分との約束は、",
+  "変化はいつも、",
+  "一日を整えることは、",
+  "弱さを見つけた日は、",
+  "未来の自分は、"
+];
+const quoteSecondLines = [
+  "昨日より少し、自分にやさしく。",
+  "続けばちゃんと道になる。",
+  "明日の自分が助けてくれる。",
+  "記録すれば前に進んでいる。",
+  "未来の自分が喜ぶ方へ。",
+  "あとから強く効いてくる。",
+  "ひとつ守れたら、それで勝ち。",
+  "自分を責めない仕組みにすること。",
+  "見えないところで力になる。",
+  "今日の一歩をちゃんと見ている。"
+];
 
 const todayKey = () => {
   const date = new Date();
@@ -384,6 +418,13 @@ function showToast(message) {
   toast.textContent = message;
   toast.classList.add("show");
   window.setTimeout(() => toast.classList.remove("show"), 1800);
+}
+
+function renderQuote() {
+  const first = quoteFirstLines[Math.floor(Math.random() * quoteFirstLines.length)];
+  const second = quoteSecondLines[Math.floor(Math.random() * quoteSecondLines.length)];
+  const quote = `${first}\n${second}`;
+  document.querySelector("#quoteText").innerHTML = quote.replace("\n", "<br />");
 }
 
 form.addEventListener("submit", async (event) => {
@@ -543,6 +584,7 @@ document.querySelector("#exportButton").addEventListener("click", () => {
 function renderAll() { renderHistory(); renderChart(); }
 dateInput.value = todayKey();
 loadFormForDate();
+renderQuote();
 renderAll();
 
 function mergeRecordSets(localRecords, cloudRecords) {

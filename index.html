@@ -492,7 +492,7 @@ function calculateMoneyForwardStreak() {
 }
 
 function renderHistory() {
-  const keys = Object.keys(records).sort().reverse().slice(0, 7);
+  const keys = Object.keys(records).sort().reverse().slice(0, 30);
   const list = document.querySelector("#historyList");
   document.querySelector("#streakLabel").textContent = `連続記録 ${calculateStreak()}日`;
   document.querySelector("#moneyForwardStreakLabel").textContent = `証券を開かない ${calculateMoneyForwardStreak()}日`;

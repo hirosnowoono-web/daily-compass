@@ -126,6 +126,8 @@ h1 em { color: var(--coral); font-weight: 400; }
 .screen-average { margin-top: 12px; padding: 13px 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.55); display: inline-flex; align-items: baseline; gap: 14px; }
 .screen-average span { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
 .screen-average strong { color: var(--blue); font-size: 24px; line-height: 1; }
+.screen-average strong.screen-average-high { color: var(--red); }
+.screen-average strong.screen-average-low { color: var(--blue); }
 .history-section { padding-top: 58px; }
 .history-streaks { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .history-list { border-top: 1px solid var(--line); }
@@ -403,12 +405,6 @@ googleProvider.setCustomParameters({ prompt: "select_account" });
 
 const formatLongDate = (key) => new Intl.DateTimeFormat("ja-JP", { month: "long", day: "numeric", weekday: "long" }).format(fromDateKey(key));
 const formatShortDate = (key) => new Intl.DateTimeFormat("ja-JP", { month: "numeric", day: "numeric" }).format(fromDateKey(key));
-const formatMinutes = (minutes) => {
-  if (minutes < 60) return `${minutes}分`;
-  const hours = Math.floor(minutes / 60);
-  const rest = minutes % 60;
-  return rest ? `${hours}時間${rest}分` : `${hours}時間`;
-};
 
 function setRadio(name, value) {
   document.querySelectorAll(`[name="${name}"]`).forEach((input) => {
@@ -592,10 +588,13 @@ function renderScreenAverage() {
     .filter((value) => Number.isFinite(value));
   if (!values.length) {
     average.textContent = "--";
+    average.classList.remove("screen-average-high", "screen-average-low");
     return;
   }
   const minutes = Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-  average.textContent = formatMinutes(minutes);
+  average.textContent = `${minutes}分`;
+  average.classList.toggle("screen-average-high", minutes >= 91);
+  average.classList.toggle("screen-average-low", minutes <= 90);
 }
 
 document.querySelector("#exportButton").addEventListener("click", () => {

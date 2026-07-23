@@ -123,7 +123,7 @@ h1 em { color: var(--coral); font-weight: 400; }
 .empty-chart { position: absolute; inset: 0; display: none; flex-direction: column; justify-content: center; align-items: center; color: var(--muted); gap: 8px; text-align: center; }
 .empty-chart strong { color: var(--ink); font-family: Georgia, "Yu Mincho", serif; font-weight: 400; font-size: 20px; }
 .empty-chart span { font-size: 11px; }
-.screen-average { margin: 16px 48px 0; padding: 13px 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.55); display: flex; align-items: baseline; justify-content: space-between; gap: 14px; }
+.screen-average { margin-top: 12px; padding: 13px 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.55); display: inline-flex; align-items: baseline; gap: 14px; }
 .screen-average span { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
 .screen-average strong { color: var(--blue); font-size: 24px; line-height: 1; }
 .history-section { padding-top: 58px; }
@@ -183,7 +183,7 @@ h1 em { color: var(--coral); font-weight: 400; }
   .chart-scroll { margin: 0 37px; }
   #trendChart { min-width: 780px; width: 780px; min-height: 280px; }
   .chart-axis { top: 18px; bottom: 48px; width: 42px; font-size: 12.75px; }
-  .screen-average { margin: 14px 0 0; padding: 12px 13px; }
+  .screen-average { margin: -10px 0 18px; padding: 12px 13px; display: flex; justify-content: space-between; }
   .screen-average span { font-size: 11px; }
   .screen-average strong { font-size: 22px; }
   .history-section { padding-top: 42px; }
@@ -285,6 +285,10 @@ h1 em { color: var(--coral); font-weight: 400; }
           <div>
             <p class="section-number">02 / TRENDS</p>
             <h2>積み上げの記録</h2>
+            <div class="screen-average" id="screenAverage" aria-live="polite">
+              <span>過去7日間平均</span>
+              <strong>--</strong>
+            </div>
           </div>
           <div class="legend"><span><i class="dot blue"></i>90分未満</span><span><i class="dot red"></i>90分以上</span><span><i class="dot ink"></i>筋トレ</span></div>
         </div>
@@ -295,10 +299,6 @@ h1 em { color: var(--coral); font-weight: 400; }
           </div>
           <div class="chart-axis chart-axis-right" id="workoutAxis" aria-label="筋トレ回数の縦軸"></div>
           <div class="empty-chart" id="emptyChart"><strong>最初の記録をつけよう</strong><span>2日以上記録すると、変化が線で見えてきます。</span></div>
-        </div>
-        <div class="screen-average" id="screenAverage" aria-live="polite">
-          <span>過去7日間平均</span>
-          <strong>--</strong>
         </div>
       </section>
 

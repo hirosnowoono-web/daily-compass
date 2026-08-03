@@ -128,8 +128,12 @@ h1 em { color: var(--coral); font-weight: 400; }
 .empty-chart { position: absolute; inset: 0; display: none; flex-direction: column; justify-content: center; align-items: center; color: var(--muted); gap: 8px; text-align: center; }
 .empty-chart strong { color: var(--ink); font-family: Georgia, "Yu Mincho", serif; font-weight: 400; font-size: 20px; }
 .empty-chart span { font-size: 11px; }
-.screen-average { margin-top: 12px; padding: 13px 16px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.55); display: inline-flex; align-items: baseline; gap: 14px; }
-.screen-average span { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.screen-average { margin-top: 12px; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.55); display: inline-flex; align-items: center; gap: 13px; }
+.screen-average-period { display: flex; gap: 3px; padding: 3px; border-radius: 9px; background: var(--paper); }
+.screen-average-period button { min-width: 44px; min-height: 34px; padding: 0 9px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 800; cursor: pointer; }
+.screen-average-period button.is-active { background: var(--ink); color: #fff; box-shadow: 0 4px 10px rgba(36,49,46,.14); }
+.screen-average-result { display: flex; align-items: baseline; gap: 12px; padding-right: 7px; }
+.screen-average-result span { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
 .screen-average strong { color: var(--blue); font-size: 24px; line-height: 1; }
 .screen-average strong.screen-average-high { color: var(--red); }
 .screen-average strong.screen-average-low { color: var(--blue); }
@@ -190,8 +194,10 @@ h1 em { color: var(--coral); font-weight: 400; }
   .chart-scroll { margin: 0 37px; }
   #trendChart { min-width: 780px; width: 780px; min-height: 280px; }
   .chart-axis { top: 18px; bottom: 48px; width: 42px; font-size: 12.75px; }
-  .screen-average { margin: -10px 0 18px; padding: 12px 13px; display: flex; justify-content: space-between; }
-  .screen-average span { font-size: 11px; }
+  .screen-average { margin: -10px 0 18px; padding: 8px; display: flex; flex-direction: column; align-items: stretch; gap: 8px; }
+  .screen-average-period button { flex: 1; min-height: 38px; }
+  .screen-average-result { justify-content: space-between; padding: 3px 6px 2px; }
+  .screen-average-result span { font-size: 11px; }
   .screen-average strong { font-size: 22px; }
   .history-section { padding-top: 42px; }
   .history-row { grid-template-columns: 80px 1fr 1fr; gap: 10px; padding: 12px 0; }
@@ -298,8 +304,15 @@ h1 em { color: var(--coral); font-weight: 400; }
             <p class="section-number">02 / TRENDS</p>
             <h2>積み上げの記録</h2>
             <div class="screen-average" id="screenAverage" aria-live="polite">
-              <span>過去7日間平均</span>
-              <strong>--</strong>
+              <div class="screen-average-period" role="group" aria-label="平均を計算する期間">
+                <button class="is-active" type="button" data-average-days="7" aria-pressed="true">7日</button>
+                <button type="button" data-average-days="14" aria-pressed="false">14日</button>
+                <button type="button" data-average-days="30" aria-pressed="false">30日</button>
+              </div>
+              <div class="screen-average-result">
+                <span id="screenAverageLabel">過去7日間平均</span>
+                <strong>--</strong>
+              </div>
             </div>
           </div>
           <div class="legend"><span><i class="dot blue"></i>90分未満</span><span><i class="dot red"></i>90分以上</span><span><i class="dot ink"></i>筋トレ</span></div>
@@ -331,6 +344,8 @@ h1 em { color: var(--coral); font-weight: 400; }
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
     <script>
 const STORAGE_KEY = "daily-compass-records-v1";
+const SCREEN_AVERAGE_DAYS_KEY = "daily-compass-screen-average-days-v1";
+const screenAverageOptions = [7, 14, 30];
 const form = document.querySelector("#dailyForm");
 const dateInput = document.querySelector("#recordDate");
 const savedBadge = document.querySelector("#savedBadge");
@@ -400,6 +415,8 @@ const loadRecords = () => {
 };
 
 let records = loadRecords();
+let screenAverageDays = Number(localStorage.getItem(SCREEN_AVERAGE_DAYS_KEY));
+if (!screenAverageOptions.includes(screenAverageDays)) screenAverageDays = 7;
 let currentUser = null;
 let cloudDocument = null;
 let stopCloudListener = null;
@@ -741,7 +758,13 @@ function renderChart() {
 
 function renderScreenAverage() {
   const average = document.querySelector("#screenAverage strong");
-  const values = recentKeys(7)
+  document.querySelector("#screenAverageLabel").textContent = `過去${screenAverageDays}日間平均`;
+  document.querySelectorAll("[data-average-days]").forEach((button) => {
+    const isActive = Number(button.dataset.averageDays) === screenAverageDays;
+    button.classList.toggle("is-active", isActive);
+    button.setAttribute("aria-pressed", String(isActive));
+  });
+  const values = recentKeys(screenAverageDays)
     .map((key) => records[key]?.screenTime)
     .filter((value) => Number.isFinite(value));
   if (!values.length) {
@@ -754,6 +777,14 @@ function renderScreenAverage() {
   average.classList.toggle("screen-average-high", minutes >= 91);
   average.classList.toggle("screen-average-low", minutes <= 90);
 }
+
+document.querySelectorAll("[data-average-days]").forEach((button) => {
+  button.addEventListener("click", () => {
+    screenAverageDays = Number(button.dataset.averageDays);
+    localStorage.setItem(SCREEN_AVERAGE_DAYS_KEY, String(screenAverageDays));
+    renderScreenAverage();
+  });
+});
 
 document.querySelector("#exportButton").addEventListener("click", () => {
   const blob = new Blob([JSON.stringify(records, null, 2)], { type: "application/json" });

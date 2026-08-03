@@ -773,8 +773,8 @@ function renderScreenAverage() {
     average.classList.remove("screen-average-high", "screen-average-low");
     return;
   }
-  const minutes = Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
-  average.textContent = `${minutes}分`;
+  const minutes = values.reduce((sum, value) => sum + value, 0) / values.length;
+  average.textContent = `${minutes.toFixed(1)}分`;
   average.classList.toggle("screen-average-high", minutes >= 91);
   average.classList.toggle("screen-average-low", minutes <= 90);
 }
@@ -882,7 +882,7 @@ if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
     refreshingForUpdate = true;
     window.location.reload();
   });
-  navigator.serviceWorker.register("service-worker.js?v=5", { updateViaCache: "none" })
+  navigator.serviceWorker.register("service-worker.js?v=6", { updateViaCache: "none" })
     .then((registration) => registration.update())
     .catch(() => {});
 }

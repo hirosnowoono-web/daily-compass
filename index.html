@@ -130,7 +130,7 @@ h1 em { color: var(--coral); font-weight: 400; }
 .empty-chart span { font-size: 11px; }
 .screen-average { margin-top: 12px; padding: 8px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.55); display: inline-flex; align-items: center; gap: 13px; }
 .screen-average-period { display: flex; gap: 3px; padding: 3px; border-radius: 9px; background: var(--paper); }
-.screen-average-period button { min-width: 44px; min-height: 34px; padding: 0 9px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 800; cursor: pointer; }
+.screen-average-period button { position: relative; z-index: 2; min-width: 44px; min-height: 34px; padding: 0 9px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-size: 11px; font-weight: 800; cursor: pointer; pointer-events: auto; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .screen-average-period button.is-active { background: var(--ink); color: #fff; box-shadow: 0 4px 10px rgba(36,49,46,.14); }
 .screen-average-result { display: flex; align-items: baseline; gap: 12px; padding-right: 7px; }
 .screen-average-result span { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
@@ -875,7 +875,15 @@ auth.onAuthStateChanged(async (user) => {
 });
 
 if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
-  navigator.serviceWorker.register("service-worker.js").catch(() => {});
+  let refreshingForUpdate = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshingForUpdate) return;
+    refreshingForUpdate = true;
+    window.location.reload();
+  });
+  navigator.serviceWorker.register("service-worker.js?v=4", { updateViaCache: "none" })
+    .then((registration) => registration.update())
+    .catch(() => {});
 }
 
     </script>

@@ -307,7 +307,7 @@ h1 em { color: var(--coral); font-weight: 400; }
         <div class="chart-wrap">
           <div class="chart-axis chart-axis-left" id="screenAxis" aria-label="スクリーンタイムの縦軸"></div>
           <div class="chart-scroll">
-            <svg id="trendChart" viewBox="0 0 900 280" role="img" aria-label="14日間のスクリーンタイムと筋トレ回数のグラフ"></svg>
+            <svg id="trendChart" viewBox="0 0 900 280" role="img" aria-label="記録開始日から今日までのスクリーンタイムと筋トレ回数のグラフ"></svg>
           </div>
           <div class="chart-axis chart-axis-right" id="workoutAxis" aria-label="筋トレ回数の縦軸"></div>
           <div class="empty-chart" id="emptyChart"><strong>最初の記録をつけよう</strong><span>2日以上記録すると、変化が線で見えてきます。</span></div>
@@ -612,6 +612,17 @@ function recentKeys(days) {
   return Array.from({ length: days }, (_, index) => addDays(todayKey(), index - days + 1));
 }
 
+function allChartKeys() {
+  const today = todayKey();
+  const recordedKeys = Object.keys(records)
+    .filter((key) => /^\d{4}-\d{2}-\d{2}$/.test(key) && key <= today)
+    .sort();
+  if (!recordedKeys.length) return recentKeys(14);
+  const first = recordedKeys[0];
+  const dayCount = Math.max(14, Math.round((fromDateKey(today) - fromDateKey(first)) / 86400000) + 1);
+  return Array.from({ length: dayCount }, (_, index) => addDays(first, index));
+}
+
 function renderWeek() {
   const keys = recentKeys(7);
   let achieved = 0;
@@ -674,16 +685,21 @@ function renderHistory() {
 
 function renderChart() {
   const svg = document.querySelector("#trendChart");
-  const keys = recentKeys(14);
+  const keys = allChartKeys();
   const available = keys.filter((key) => records[key]);
   document.querySelector("#emptyChart").style.display = available.length ? "none" : "flex";
   svg.style.opacity = available.length ? "1" : ".25";
-  const width = 900, height = 280, left = 42, right = 48, top = 18, bottom = 35;
+  const height = 280, left = 42, right = 48, top = 18, bottom = 35;
+  const width = Math.max(900, left + right + Math.max(keys.length - 1, 1) * 58);
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.style.width = `${width}px`;
+  svg.style.minWidth = `${width}px`;
+  svg.setAttribute("aria-label", `記録開始日から今日までのスクリーンタイムと筋トレ回数のグラフ（${keys.length}日間）`);
   const innerW = width - left - right, innerH = height - top - bottom;
   const screenMax = 240;
   const workoutMin = 20;
   const workoutMax = 60;
-  const x = (index) => left + (index / 13) * innerW;
+  const x = (index) => left + (index / Math.max(keys.length - 1, 1)) * innerW;
   const yScreen = (value) => top + innerH - (Math.min(value, screenMax) / screenMax) * innerH;
   const yWorkout = (value) => {
     const clamped = Math.min(Math.max(value, workoutMin), workoutMax);
@@ -697,7 +713,7 @@ function renderChart() {
     markup += `<line class="grid-line" x1="${left}" x2="${width-right}" y1="${y}" y2="${y}"/>`;
   }
   keys.forEach((key, index) => {
-    if (index % 2 === 0 || index === 13) markup += `<text class="chart-label" text-anchor="middle" x="${x(index)}" y="${height-8}">${formatShortDate(key)}</text>`;
+    if (index % 2 === 0 || index === keys.length - 1) markup += `<text class="chart-label" text-anchor="middle" x="${x(index)}" y="${height-8}">${formatShortDate(key)}</text>`;
   });
   keys.forEach((key, index) => {
     if (!records[key]) return;
@@ -718,11 +734,9 @@ function renderChart() {
   const scrollToLatest = () => {
     chartScroll.scrollLeft = chartScroll.scrollWidth - chartScroll.clientWidth;
   };
-  if (window.matchMedia("(max-width: 760px)").matches) {
-    requestAnimationFrame(scrollToLatest);
-    setTimeout(scrollToLatest, 100);
-    setTimeout(scrollToLatest, 500);
-  }
+  requestAnimationFrame(scrollToLatest);
+  setTimeout(scrollToLatest, 100);
+  setTimeout(scrollToLatest, 500);
 }
 
 function renderScreenAverage() {

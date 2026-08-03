@@ -1,4 +1,4 @@
-const CACHE_NAME = "daily-compass-v5";
+const CACHE_NAME = "daily-compass-v6";
 const FALLBACK_PAGE = "./index.html";
 
 self.addEventListener("install", (event) => {
